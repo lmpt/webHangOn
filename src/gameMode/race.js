@@ -28,14 +28,19 @@ define([
       position: new THREE.Vector3(0, 3, 2),
       cameraOffset: new  THREE.Vector3(-.75, 0, 0)
     },
+    depthOffset: new THREE.Vector2(),
     materials: {
       roadBase: new THREE.MeshPhongMaterial( { color: 0xffffff, map: THREE.ImageUtils.loadTexture( "texture/road1.jpg" ) }),
       road1: new THREE.MeshPhongMaterial( { color: 0xffffff, map: THREE.ImageUtils.loadTexture( "texture/road-side1.jpg" )}),
       road2: new THREE.MeshPhongMaterial( { color: 0xffffff, map: THREE.ImageUtils.loadTexture( "texture/road-strip1.jpg" )}),
       ground: new THREE.MeshPhongMaterial( { color: 0xffffff, map: THREE.ImageUtils.loadTexture( "texture/grass1.jpg" )}),
-      sky: new THREE.MeshPhongMaterial( { color: 0xffffff, map: THREE.ImageUtils.loadTexture( "texture/sky1.jpg" ), side: THREE.DoubleSide})
+      sky: new THREE.MeshPhongMaterial( { color: 0xffffff, map: THREE.ImageUtils.loadTexture( "texture/sky1.jpg" ), side: THREE.DoubleSide}),
+      mFar: new THREE.MeshPhongMaterial( { color: 0xffffff, map: THREE.ImageUtils.loadTexture( "texture/mountain-back1.png" ), side: THREE.DoubleSide, transparent: true}),
+      mClose: new THREE.MeshPhongMaterial( { color: 0xffffff, map: THREE.ImageUtils.loadTexture( "texture/mountain-front1.png" ), side: THREE.DoubleSide, transparent: true})
     },
     skyPlane : null,
+    mFar: null,
+    mClose: null,
     setup: function() {
       this.camera.up = new THREE.Vector3(0,1,0);
       this.renderer.setSize( window.innerWidth, window.innerHeight );
@@ -70,9 +75,18 @@ define([
         this.materials.ground
         );
 
-      var planeGeometry = new THREE.PlaneGeometry( 150, 35, 1 );
-      this.skyPlane = new THREE.Mesh( planeGeometry, this.materials.sky );
+      var skyGeometry = new THREE.PlaneGeometry( 120, 35, 1 );
+      this.skyPlane = new THREE.Mesh( skyGeometry, this.materials.sky );
       this.scene.add( this.skyPlane );
+
+      var mFarGeometry = new THREE.PlaneGeometry( 150, 35, 1 );
+      this.mFar = new THREE.Mesh( mFarGeometry, this.materials.mFar );
+      this.scene.add( this.mFar );
+
+      var mCloseGeometry = new THREE.PlaneGeometry( 150, 35, 1 );
+      this.mClose = new THREE.Mesh( mCloseGeometry, this.materials.mClose );
+      this.scene.add( this.mClose );
+
 
 
       this.skyPlane.rotation.x = 0;
@@ -112,18 +126,59 @@ define([
 
       var ydiffFromSpline = vectorUtility.diff(this.camera.position.y, this.roadSpline[this.currentSpline].y + 2);
 
-      this.camera.position.x += xdiffFromSpline / 10;
-      this.camera.position.y += ydiffFromSpline / 10;
+      var zdiffFromSpline = vectorUtility.diff(this.camera.position.z, this.roadSpline[this.currentSpline].z);
+
+      var perToNextSpline = (zdiffFromSpline + 4) / 2 - 1;
+
+      var xDif = (xdiffFromSpline / 10) * perToNextSpline;
+      var yDif = (ydiffFromSpline / 10) * perToNextSpline;
+
+      this.camera.position.x += xDif;
+      this.camera.position.y += yDif;
+
+      if(yDif > 0.01 || yDif < -0.01) {
+        if (yDif > 0) {
+          this.depthOffset.y += .05 * yDif;
+        } else if (yDif < 0) {
+          this.depthOffset.y -= .05 * yDif;
+        }
+      } else {
+        if (this.depthOffset.y > 0) {
+          this.depthOffset.y -= .001 * perToNextSpline;
+        } else if (this.depthOffset.y < 0) {
+          this.depthOffset.y += .001 * perToNextSpline;
+        }
+      }
+
+      if(xDif > 0.03 || xDif < -0.03) {
+        if (xDif > 0) {
+          this.depthOffset.x += .1 * xDif;
+        } else if (xDif < 0) {
+          this.depthOffset.x -= .1 * xDif;
+        }
+      } else if(this.depthOffset.x > 0.06 || this.depthOffset.x < -0.06) {
+        if (this.depthOffset.x > 0) {
+          this.depthOffset.x -= .05;
+        } else if (this.depthOffset.x < 0) {
+          this.depthOffset.x += .05;
+        }
+      }
+
+      //this.depthOffset.y = vectorUtility.clamp(this.depthOffset.y, -2, 2);
+
+
 
       this.skyPlane.position.z = this.camera.position.z -29.9999;
       this.skyPlane.position.x = this.camera.position.x;
-      this.skyPlane.position.y = this.camera.position.y + 7;
+      this.skyPlane.position.y = this.camera.position.y - (this.depthOffset.y * 5) + 10;
 
-//      this.camera.lookAt(new THREE.Vector3(this.roadSpline[this.currentSpline+5].x,
-//        this.roadSpline[this.currentSpline+10].y,
-//        this.roadSpline[this.currentSpline+10].z));
+      this.mFar.position.z = this.camera.position.z -29.9998;
+      this.mFar.position.x = this.camera.position.x - this.depthOffset.x * 2;
+      this.mFar.position.y = this.camera.position.y - (this.depthOffset.y * 10) + 2;
 
-      this.camera.position = this.position + this.cameraOffset;
+      this.mClose.position.z = this.camera.position.z -29.9997;
+      this.mClose.position.x = this.camera.position.x -this.depthOffset.x * 4;
+      this.mClose.position.y = this.camera.position.y - (this.depthOffset.y * 20) + 2;
 
       this.renderer.render( this.scene, this.camera );
     },
