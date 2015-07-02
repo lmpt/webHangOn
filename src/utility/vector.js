@@ -34,7 +34,7 @@ define(function () {
 
       return newSpline;
     },
-    buildSpline: function(diffArray) {
+    buildSpline: function(diffArray, segmentLength) {
       var newSpline = [];
       var x = 0;
       var y = 0;
@@ -42,16 +42,10 @@ define(function () {
       for(i = 0; i < diffArray.length; i++) {
         x += diffArray[i].x;
         y += diffArray[i].y;
-        z += diffArray[i].z;
+        z += (diffArray[i].z - segmentLength);
         newSpline.push(new THREE.Vector3( x, y, z ));
       }
       return newSpline;
-    },
-    addVectors: function(vector1, vector2) {
-      vector1.x += vector2.x;
-      vector1.y += vector2.y;
-      vector1.z += vector2.z;
-      return vector1;
     },
     clamp: clamp = function(number, min, max) {
       return Math.min(Math.max(number, min), max);
