@@ -60,7 +60,7 @@ return {
         this.materials.ground
       );
 
-      var skyGeometry = new THREE.PlaneGeometry( 120, 35, 1 );
+      var skyGeometry = new THREE.PlaneGeometry( 150, 45, 1 );
       this.skyPlane = new THREE.Mesh( skyGeometry, this.materials.sky );
       scene.add( this.skyPlane );
 

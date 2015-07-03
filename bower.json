@@ -16,6 +16,7 @@
   ],
   "dependencies": {
     "three.js": "~0.71.0",
-    "requirejs": "~2.1.18"
+    "requirejs": "~2.1.18",
+    "mousetrap": "~1.5.2"
   }
 }
