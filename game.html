@@ -7,6 +7,16 @@
   </style>
 </head>
 <body>
-<script data-main="src/main" src="bower_components/requirejs/require.js"></script>
+<script src="node_modules/three/build/three.min.js"></script>
+<script src="node_modules/systemjs/dist/system.js"></script>
+<script>
+
+  System.defaultJSExtensions = true;
+
+  System.config({
+    baseURL: 'src/'
+  });
+  System.import('game');
+</script>
 </body>
 </html>
